@@ -1,0 +1,4 @@
+/* Dark mode override for the native HTML5 audio player */
+[data-mantine-color-scheme='dark'] audio {
+    filter: invert(0.85) hue-rotate(180deg);
+}

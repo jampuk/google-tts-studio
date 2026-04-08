@@ -1,0 +1,123 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cloud Build pipeline — Google Text-to-Speech Studio
+#
+# Substitution variables (set in Cloud Build trigger or --substitutions flag):
+#
+#   _REGION          GCP region for Cloud Run (e.g. us-central1)
+#   _SERVICE_NAME    Cloud Run service name (e.g. google-tts-studio)
+#   _ARTIFACT_REPO   Artifact Registry repo name (e.g. google-tts-studio)
+#
+# Built-in substitutions used:
+#   $PROJECT_ID      Automatically provided by Cloud Build
+#   $COMMIT_SHA      Git commit SHA (used as image tag for traceability)
+# ─────────────────────────────────────────────────────────────────────────────
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE_NAME: google-tts-studio
+  _ARTIFACT_REPO: google-tts-studio
+  # Set to "true" to make the Cloud Run service publicly accessible.
+  # Leave as "false" for private/internal deployments — configure IAM access
+  # separately via `gcloud run services add-iam-policy-binding`.
+  _ALLOW_UNAUTHENTICATED: "true"
+  # Gunicorn worker count.  Override per-environment as needed.
+  # Rule of thumb: (2 × CPU) + 1.  Cloud Run default CPU = 1.
+  _WEB_CONCURRENCY: "3"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # ── Step 1: Build the 'test' stage and run pytest inside it ────────────────
+  - id: run-tests
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --target
+      - test
+      - --tag
+      - test-image
+      - .
+
+  # ── Step 2: Build the 'lint' stage — runs ruff + mypy against src/ ─────────
+  # A non-zero exit from ruff check or mypy fails the build immediately,
+  # preventing a broken image from being pushed to Artifact Registry.
+  - id: run-lint
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --target
+      - lint
+      - --tag
+      - lint-image
+      - .
+    waitFor:
+      - run-tests
+
+  # ── Step 3: Build the final 'runtime' image and tag it ────────────────────
+  - id: build-runtime
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --target
+      - runtime
+      - --tag
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}
+      - --tag
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:latest
+      - .
+    waitFor:
+      - run-lint
+
+  # ── Step 4: Push both tags to Artifact Registry ───────────────────────────
+  - id: push-commit-tag
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}
+    waitFor:
+      - build-runtime
+
+  - id: push-latest-tag
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:latest
+    waitFor:
+      - build-runtime
+
+  # ── Step 5: Deploy to Cloud Run ───────────────────────────────────────────
+  # Uses bash so we can conditionally pass --allow-unauthenticated based on
+  # the _ALLOW_UNAUTHENTICATED substitution variable (default: "true").
+  # Set _ALLOW_UNAUTHENTICATED=false in your Cloud Build trigger to require
+  # IAM authentication (configure access via `gcloud run services add-iam-policy-binding`).
+  - id: deploy-cloud-run
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        AUTH_FLAG="--allow-unauthenticated"
+        if [ "${_ALLOW_UNAUTHENTICATED}" != "true" ]; then
+          AUTH_FLAG="--no-allow-unauthenticated"
+        fi
+        gcloud run deploy ${_SERVICE_NAME} \
+          --image ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${COMMIT_SHA} \
+          --region ${_REGION} \
+          --platform managed \
+          $${AUTH_FLAG} \
+          --port 8080 \
+          --min-instances 0 \
+          --max-instances 10 \
+          --memory 512Mi \
+          --cpu 1 \
+          --timeout 300 \
+          --set-env-vars PORT=8080,WEB_CONCURRENCY=${_WEB_CONCURRENCY},LOG_FORMAT=json
+    waitFor:
+      - push-commit-tag
+      - push-latest-tag
+
+# Final image references written to build metadata
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:latest

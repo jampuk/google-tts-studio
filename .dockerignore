@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .dockerignore — google-tts-studio
+# Keeps the build context lean; only what the Dockerfile actually needs is sent
+# to the Docker daemon.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Version control ───────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Python artefacts ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env/
+
+# ── Environment / Secrets (never bake into images) ────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+service-account*.json
+*-credentials.json
+
+# ── Testing & coverage (not needed in runtime image) ─────────────────────────
+# Note: the 'test' stage copies tests/ to run pytest, but Docker multi-stage
+# builds handle that internally. The runtime stage does NOT copy tests/.
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# ── Type-checker caches ───────────────────────────────────────────────────────
+.mypy_cache/
+.pytype/
+.pyre/
+
+# ── IDE / editor files ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Docker-related (no need to send compose file into build context) ──────────
+docker-compose.yml
+docker-compose.override.yml
+
+# ── CI/CD ─────────────────────────────────────────────────────────────────────
+cloudbuild.yaml
+.github/
+
+# ── Documentation (not needed at runtime) ────────────────────────────────────
+README.md
+agents.md
+
+# ── Logs and local audio artefacts ───────────────────────────────────────────
+*.log
+logs/
+*.mp3
+*.wav
+*.ogg
+*.au
+*.alaw

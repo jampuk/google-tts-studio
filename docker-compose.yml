@@ -1,0 +1,48 @@
+# 'version' key is obsolete in Docker Compose V2 — removed.
+
+services:
+  # ── Runtime service (default) ─────────────────────────────────────────────
+  # Builds the lean production image (no dev deps, no test code).
+  # Run:  docker compose up
+  google-tts-studio:
+    build:
+      context: .
+      target: runtime
+    image: google-tts-studio:dev
+    ports:
+      - "8050:8080"
+    environment:
+      - PYTHONPATH=/app
+      - PORT=8080
+      # Emit structured JSON logs matching the Dockerfile production setting.
+      # Change to LOG_FORMAT=text for plain human-readable output locally.
+      - LOG_FORMAT=json
+      # Worker count driven by WEB_CONCURRENCY (same as Dockerfile default).
+      # Override here for local testing without rebuilding.
+      - WEB_CONCURRENCY=3
+    # --threads 4 matches the Dockerfile CMD so local and production environments
+    # have identical Gunicorn worker/thread configuration (3 workers × 4 threads).
+    command: >
+      gunicorn
+      --bind 0.0.0.0:8080
+      --threads 4
+      --timeout 120
+      --limit-request-line 0
+      src.main:server
+    restart: unless-stopped
+
+  # ── Test service ──────────────────────────────────────────────────────────
+  # Builds the 'test' stage which runs pytest at build time and exits.
+  # Run:  docker compose run --rm tts-studio-test
+  tts-studio-test:
+    build:
+      context: .
+      target: test
+    image: google-tts-studio:test
+    environment:
+      - PYTHONPATH=/app
+    # pytest is executed during `docker build --target test` (see Dockerfile).
+    # This command is a no-op; the test gate is the build step itself.
+    command: echo "All tests passed during image build."
+    profiles:
+      - test

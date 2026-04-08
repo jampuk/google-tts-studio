@@ -1,0 +1,6 @@
+dash>=2.17.0
+dash-mantine-components>=0.14.0
+requests>=2.31.0
+gunicorn>=22.0.0
+tenacity>=8.0.0
+python-json-logger>=2.0.0

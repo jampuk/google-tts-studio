@@ -1,0 +1,60 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   responsive.css  —  Mobile-first overrides for Google TTS Studio
+   Dash auto-serves every file in assets/ with no registration required.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Small / mobile  (≤ 576 px) ─────────────────────────────────────────── */
+@media (max-width: 576px) {
+
+  /* Tighten inner AppShell padding so cards reach closer to screen edges */
+  .mantine-AppShell-main {
+    padding: 8px !important;
+  }
+
+  /* Prevent any card / paper from causing horizontal scroll */
+  .mantine-Paper-root {
+    overflow-x: hidden;
+  }
+
+  /* Enlarge slider thumbs to meet the 44 px touch-target recommendation */
+  .mantine-Slider-thumb {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Cap textarea initial height so it doesn't dominate the viewport */
+  .mantine-Textarea-input {
+    min-height: 100px !important;
+  }
+
+  /* Give the Generate button full width so it's easy to tap */
+  #generate-btn {
+    width: 100%;
+  }
+
+  /* Stack the char-count / Generate button row vertically on very small screens */
+  #generate-btn-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ── Tablet  (576 px – 768 px) ───────────────────────────────────────────── */
+@media (min-width: 576px) and (max-width: 768px) {
+
+  .mantine-AppShell-main {
+    padding: 12px;
+  }
+
+  /* Slightly larger slider thumbs for tablet touch use */
+  .mantine-Slider-thumb {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+/* ── Audio player — always full-width ───────────────────────────────────── */
+audio {
+  width: 100%;
+  display: block;
+}
