@@ -2,16 +2,12 @@
 
 A full-featured web application for generating, playing, and downloading audio using the Google Cloud Text-to-Speech (TTS) API. Built with [Dash](https://dash.plotly.com/) and [Dash Mantine Components](https://www.dash-mantine-components.com/), following Clean Architecture principles.
 
-## Demo
-
-Try out the live demo here: [tts.beseek.app](https://tts.beseek.app)
-
 ## Features
 
 - **Dynamic Voice Listing:** Automatically fetches the latest available voices (~60+ languages) directly from the Google TTS API, with intelligent filtering by language and gender.
 - **Voice Preview:** Audition a voice with a short, language-appropriate phrase before generating your full text, saving API calls.
 - **SSML Support:** Toggle between Plain Text and SSML input modes. Use SSML tags like `<break>`, `<prosody>`, and `<emphasis>` for fine-grained control over speech generation.
-- **Text Sanitization & Validation:** Automatically strips HTML tags and Markdown syntax from plain text input. In SSML mode, validates XML structure before sending to the API.
+- **Text Sanitization & Validation:** Automatically strips HTML tags and Markdown syntax from plain text input. In SSML mode, validates XML structure before sending to the API. Check **Process text as-is** to bypass cleanup entirely and send the raw input directly to the API.
 - **Byte-Accurate Limits:** Enforces the Google TTS API's 5000-byte limit (UTF-8), correctly handling multibyte characters (e.g., CJK, Arabic).
 - **Advanced Audio Controls:** Fine-tune the generated speech with sliders for Speaking Rate, Pitch, and Volume Gain. Easily reset individual settings or all advanced settings to their defaults with dedicated reset buttons.
 - **Device Profiles:** Apply audio effects optimized for specific devices (e.g., headphones, small Bluetooth speakers, large home entertainment systems).
@@ -93,10 +89,11 @@ Try out the live demo here: [tts.beseek.app](https://tts.beseek.app)
 7. (Optional) Click **▶ Preview Voice** to hear a short sample of the selected voice.
 8. Choose your preferred **Audio Format**.
 9. (Optional) Expand **⚙ Advanced Settings** to adjust speed, pitch, volume, or apply an effects profile. You can reset individual settings or all advanced settings to their defaults using the **↺** buttons.
-10. Click **🎙 Generate Speech**. The app will generate the audio (and clean plain text of HTML/Markdown if applicable).
-10. Once generated, you can play the audio directly in the browser or download it using the **⬇ Download Audio** button. The downloaded file will match the format selected during generation and use your provided title.
-11. Your past creations will appear in the **Past Creations** table. Click **⤴ Load** on any row to instantly restore that generation's text, title, and full voice settings into the main interface, ready to be generated again. You can also selectively delete items using the **🗑** button, or export your entire history as a JSON file using the **⬇ Export JSON** button.
-12. To wipe all data from your browser, open the **🔑 API Configuration** accordion and click **🗑 Clear Data**.
+10. (Optional) Tick **Process text as-is (skip cleanup & fixes)** if your text is already clean and you do not want HTML tags, Markdown syntax, or whitespace to be stripped before synthesis. This option is hidden in SSML mode, where cleanup is never applied.
+11. Click **🎙 Generate Speech**. The app will generate the audio and, unless bypass is enabled, automatically clean plain text of HTML/Markdown before synthesis. The character-count display reflects whether cleanup is active.
+12. Once generated, you can play the audio directly in the browser or download it using the **⬇ Download Audio** button. The downloaded file will match the format selected during generation and use your provided title.
+13. Your past creations will appear in the **Past Creations** table. Click **⤴ Load** on any row to instantly restore that generation's text, title, and full voice settings into the main interface, ready to be generated again. You can also selectively delete items using the **🗑** button, or export your entire history as a JSON file using the **⬇ Export JSON** button.
+14. To wipe all data from your browser, open the **🔑 API Configuration** accordion and click **🗑 Clear Data**.
 
 ## Project Structure
 
@@ -200,7 +197,7 @@ Contributions are welcome! Please read the [Contributing Guidelines](CONTRIBUTIN
 
 ## License
 
-This project is authored by **Beseek Sdn. Bhd.** and is licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for details.
+This project is authored by **Jampuk Intelligence Systems** and is licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for details.
 
 ## Disclaimer
 

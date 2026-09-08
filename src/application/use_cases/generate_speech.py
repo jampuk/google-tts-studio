@@ -85,6 +85,7 @@ class GenerateSpeechUseCase:
         api_key: str,
         title: Optional[str],
         history: list[dict],
+        bypass_cleanup: bool = False,
     ) -> GenerateSpeechResult:
         """Run the full TTS generation flow.
 
@@ -102,6 +103,8 @@ class GenerateSpeechUseCase:
             api_key: Non-empty Google Cloud API key.
             title: Optional user-supplied title (used as download filename).
             history: Current history list (JSON-serialisable dicts).
+            bypass_cleanup: When True, skip sanitize_text() and send the raw
+                text directly (plain-text mode only; ignored in SSML mode).
 
         Returns:
             GenerateSpeechResult value object.
@@ -133,6 +136,14 @@ class GenerateSpeechUseCase:
             # Validate XML structure before making an API call.
             validate_ssml(text.strip())
             clean_text = text.strip()
+            was_sanitized = False
+        elif bypass_cleanup:
+            # User opted to skip all cleanup — send raw text as-is.
+            clean_text = text.strip()
+            if not clean_text:
+                raise ValueError(
+                    "Text content is empty. Please enter some text."
+                )
             was_sanitized = False
         else:
             clean_text = sanitize_text(text)

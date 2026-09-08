@@ -159,6 +159,19 @@ def create_layout() -> dmc.MantineProvider:
                     justify="space-between",
                     align="center",
                 ),
+                # Bypass cleanup checkbox — shown only in plain-text mode.
+                # Uses dcc.Checklist (not dmc.Checkbox) because dmc.Checkbox's
+                # 'checked' prop is not reliably dispatched by the Dash callback
+                # graph in DMC >=0.14.  dcc.Checklist.value is stable and works.
+                html.Div(
+                    dcc.Checklist(
+                        id="bypass-cleanup-checkbox",
+                        options=[{"label": " Process text as-is (skip cleanup & fixes)", "value": "bypass"}],
+                        value=[],
+                        style={"fontSize": "14px"},
+                    ),
+                    id="bypass-cleanup-checkbox-wrapper",
+                ),
                 # SSML hint — shown only when SSML mode is active.
                 # Wrapped in a plain div so the callback toggles display on the
                 # div, not on the dmc.Alert directly (avoids observer-helper.js

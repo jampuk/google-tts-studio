@@ -19,11 +19,19 @@ logger = logging.getLogger(__name__)
 @app.callback(
     Output("char-count", "children"),
     Input("text-input", "value"),
+    Input("bypass-cleanup-checkbox", "value"),
     prevent_initial_call=False,
 )
-def update_char_count(text):
+def update_char_count(text, bypass_values):
     raw = text or ""
     raw_chars = len(raw)
+    bypass_cleanup = bool(bypass_values)  # ["bypass"] when checked, [] when not
+
+    if bypass_cleanup:
+        raw_bytes = utf8_byte_length(raw)
+        byte_suffix = f" ({raw_bytes} bytes)" if raw_bytes != raw_chars else ""
+        return f"{raw_chars} chars{byte_suffix} / 5000 byte limit"
+
     clean = sanitize_text(raw)
     clean_chars = len(clean)
     clean_bytes = utf8_byte_length(clean)
@@ -78,13 +86,14 @@ app.clientside_callback(
     State("input-mode-toggle", "value"),
     State("api-key-store", "data"),
     State("history-store", "data"),
+    State("bypass-cleanup-checkbox", "value"),
     prevent_initial_call=True,
 )
 def generate_speech(
     n_clicks, title, text, language_code, voice_name,
     ssml_gender, audio_encoding, speaking_rate, pitch,
     volume_gain_db, effects_profile_id, input_mode_value,
-    api_key, history,
+    api_key, history, bypass_values,
 ):
     if not n_clicks:
         raise PreventUpdate
@@ -106,6 +115,7 @@ def generate_speech(
             api_key=api_key or "",
             title=title,
             history=list(history or []),
+            bypass_cleanup=bool(bypass_values),  # ["bypass"] when checked, [] when not
         )
     except ValueError as exc:
         logger.warning("generate_speech: validation error: %s", exc)
